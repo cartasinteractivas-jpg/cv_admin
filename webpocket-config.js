@@ -9,7 +9,7 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 async function verificarConexion() {
   try {
     // Reemplaza 'tu_tabla' por el nombre de alguna tabla en tu base de datos
-    const { data, error } = await supabase.from('tu_tabla').select('count', { count: 'exact', head: true });
+    const { data, error } = await supabase.from('admin').select('count', { count: 'exact', head: true });
     
     if (error) {
       console.error("Error al conectar con Supabase:", error.message);
