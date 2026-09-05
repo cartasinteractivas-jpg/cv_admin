@@ -1,0 +1,14 @@
+NOMBRE EXACTO DE LA EDGE FUNCTION:
+
+webpocket-api
+
+ARCHIVO DE CÓDIGO PARA PEGAR:
+
+supabase/functions/webpocket-api/index.ts
+
+SECRETOS QUE DEBES CREAR EN EDGE FUNCTIONS:
+
+OPENROUTER_API_KEY
+WEBPOCKET_SESSION_SECRET
+
+No pongas esos secretos dentro de index.html ni en GitHub.
