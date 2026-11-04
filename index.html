@@ -3824,7 +3824,7 @@
             ["carrito_vitrina", "Vitrina horizontal"],
             ["carrito_market", "Market"],
           ];
-          const showStock = styleExtra.mostrar_stock !== false && styleExtra.mostrar_stock !== "false";
+          const showStock = styleExtra.mostrar_stock === true || styleExtra.mostrar_stock === "true" || styleExtra.mostrar_stock === 1 || styleExtra.mostrar_stock === "1";
           const parseMock = (pr) => {
             try {
               const d = String(pr.descripcion || "");
@@ -3911,8 +3911,10 @@
               <button type="button" class="${tabCls("venta")}" data-cart-sub="venta">Venta directa</button>
               <button type="button" class="${tabCls("pedidos")}" data-cart-sub="pedidos">Pedidos</button>
               <button type="button" class="${tabCls("finanzas")}" data-cart-sub="finanzas">Finanzas</button>
+              <button type="button" class="${tabCls("config")}" data-cart-sub="config">Configuración</button>
               <button type="button" class="${tabCls("historial")}" data-cart-sub="historial">Historial</button>
             </div>`;
+          const permitirTomar = styleExtra.permitir_tomar === true || styleExtra.permitir_tomar === "true";
           
           // --- Lista de productos (desde BD) ---
           if (subCart === "productos" || !subCart) {
@@ -4072,16 +4074,17 @@
             return `<div class="form">
               ${tabsRow}
               <h4 style="margin:0 0 8px">Configuración del carrito</h4>
-              <p style="font-size:12px;opacity:.85;margin:0 0 12px">Formato de la <b>lista pública</b> de productos. Los botones + / − y <b>Ir a pagar</b> se mantienen en todos.</p>
+              <p style="font-size:12px;opacity:.85;margin:0 0 12px">Aquí eliges cómo se ve la <b>sala de productos</b> en el perfil público (lo que ve el comprador). Los botones <b>+</b> / <b>−</b> e <b>Ir a pagar</b> siempre quedan.</p>
               <form id="cart-config-form" class="form">
                 <div class="field"><label>Formato de lista (perfil público)</label>
                   <select name="cartFormato">${formatsCfg.map(([v,l]) => `<option value="${v}" ${cur===v?"selected":""}>${l}</option>`).join("")}</select>
                 </div>
                 <div class="field"><label>Mostrar stock al público</label>
                   <select name="mostrarStock">
-                    <option value="1" ${showStock?"selected":""}>Sí</option>
-                    <option value="0" ${!showStock?"selected":""}>No</option>
+                    <option value="0" ${!showStock?"selected":""}>No (oculto)</option>
+                    <option value="1" ${showStock?"selected":""}>Sí, visible</option>
                   </select>
+                  <p style="font-size:11px;opacity:.75;margin:6px 0 0">Por defecto el comprador <b>no ve</b> el stock. Solo si eliges “Sí”.</p>
                 </div>
                 <label style="display:flex;gap:10px;align-items:center;font-weight:800;margin:12px 0;padding:12px;border-radius:12px;border:1px solid #ffffff18;background:#0b1220">
                   <input type="checkbox" name="permitirTomar" ${permitirTomar?"checked":""}>
@@ -7799,7 +7802,7 @@ app
                 if (raw.startsWith("{")) extra = JSON.parse(raw);
               } catch (_) {}
               extra.cart_formato = String(fd.get("cartFormato") || "carrito_lista");
-              extra.mostrar_stock = String(fd.get("mostrarStock") || "1") === "1";
+              extra.mostrar_stock = String(fd.get("mostrarStock") || "0") === "1";
               extra.permitir_tomar = !!form.querySelector('[name="permitirTomar"]')?.checked;
               await send({
                 action: "client_save",
