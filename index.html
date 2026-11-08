@@ -4462,13 +4462,15 @@
             const hace30 = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
             return `<div class="form">
               ${tabsRow}
-              <h4 style="margin:0 0 8px">Finanzas</h4>
-              <button type="button" class="action" id="btn-refresh-finanzas" style="width:100%;background:linear-gradient(135deg,#2563eb,#38bdf8);color:#fff;font-weight:900;padding:12px;margin-bottom:8px">↻ Actualizar</button>
-              <button type="button" class="action" id="btn-reset-finanzas" style="width:100%;background:linear-gradient(135deg,#991b1b,#ef4444);color:#fff;font-weight:900;padding:12px;margin-bottom:10px">🗑 Reiniciar finanzas</button>
-              <div class="cart-subtabs" style="margin-bottom:10px">
-                <button type="button" class="active" data-fin-tab="total">Resumen total</button>
-                <button type="button" data-fin-tab="producto">Por producto</button>
-                <button type="button" data-fin-tab="dia">Por día</button>
+              <h4 style="margin:0 0 10px">Finanzas</h4>
+              <div class="account-tabs-wrap cart-tabs-wrap fin-tabs-celeste" style="margin-bottom:12px">
+                <button type="button" class="tabs-nav" data-fin-tabs-dir="-1" aria-label="Anterior">‹</button>
+                <div class="account-tabs cart-subtabs" id="fin-subtabs">
+                  <button type="button" class="active" data-fin-tab="total">Resumen total</button>
+                  <button type="button" data-fin-tab="producto">Por producto</button>
+                  <button type="button" data-fin-tab="dia">Por día</button>
+                </div>
+                <button type="button" class="tabs-nav" data-fin-tabs-dir="1" aria-label="Siguiente">›</button>
               </div>
               <div class="grid2" style="margin-bottom:10px">
                 <div class="field"><label>Desde</label><input type="date" id="fin-desde" value="${hace30}"></div>
@@ -4480,8 +4482,8 @@
               <button type="button" class="action" id="btn-filtrar-fin" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#38bdf8,#6366f1);font-weight:900">Aplicar filtros</button>
               <div id="finanzas-box"><p class="message">Cargando…</p></div>
               <button type="button" class="action" id="btn-pdf-finanzas" style="width:100%;margin-top:10px;background:linear-gradient(135deg,#16a34a,#4ade80);color:#052e16;font-weight:900">Exportar PDF</button>
-              <button type="button" class="action" id="btn-refresh-finanzas" style="width:100%;margin-top:10px;background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#0c4a6e;font-weight:900">↻ Actualizar</button>
-              <button type="button" class="action" id="btn-reset-finanzas" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#991b1b,#ef4444);color:#fff;font-weight:900">🗑 Reiniciar finanzas</button>
+              <button type="button" class="action" id="btn-refresh-finanzas" data-fin-action="refresh" style="width:100%;margin-top:10px;background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#0c4a6e;font-weight:900">↻ Actualizar</button>
+              <button type="button" class="action" id="btn-reset-finanzas" data-fin-action="reset" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#991b1b,#ef4444);color:#fff;font-weight:900">🗑 Reiniciar finanzas</button>
             </div>`;
           }
           if (subCart === "historial") {
@@ -5456,6 +5458,67 @@ function daysLeft(c) {
 
       
       // Guardar configuración carrito (siempre, no solo en pestaña productos)
+      
+      if (!window._wpFinBtnsBound) {
+        window._wpFinBtnsBound = true;
+        document.addEventListener(
+          "click",
+          (e) => {
+            const btn = e.target.closest && e.target.closest("[data-fin-action], #btn-refresh-finanzas, #btn-reset-finanzas");
+            if (!btn) return;
+            const act =
+              btn.getAttribute("data-fin-action") ||
+              (btn.id === "btn-reset-finanzas" ? "reset" : btn.id === "btn-refresh-finanzas" ? "refresh" : "");
+            if (!act) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (act === "reset") {
+              void (async () => {
+                try {
+                  const ok =
+                    typeof appConfirm === "function"
+                      ? await appConfirm(
+                          "ADVERTENCIA: Se borrarán TODOS los datos de finanzas e historial de esta cuenta. No se podrán recuperar. ¿Reiniciar?",
+                        )
+                      : confirm("¿Reiniciar finanzas? No se puede recuperar.");
+                  if (!ok) return;
+                  const ok2 =
+                    typeof appConfirm === "function"
+                      ? await appConfirm("Última confirmación: acción irreversible. ¿Continuar?")
+                      : confirm("¿Seguro?");
+                  if (!ok2) return;
+                  await send({ action: "finanzas_reset" });
+                  if (typeof appAlert === "function")
+                    void appAlert("Finanzas reiniciadas. Totales en cero.");
+                  state._finTick = Date.now();
+                  render();
+                } catch (err) {
+                  if (typeof appAlert === "function") void appAlert(err.message || String(err));
+                }
+              })();
+              return;
+            }
+            if (act === "refresh") {
+              void (async () => {
+                try {
+                  const r = await send({ action: "historial_list" });
+                  if (typeof renderFinanzas === "function")
+                    renderFinanzas(r.historial || r.pedidos || []);
+                  else {
+                    state._finTick = Date.now();
+                    render();
+                  }
+                } catch (err) {
+                  if (typeof appAlert === "function") void appAlert(err.message || String(err));
+                  else state._finTick = Date.now(), render();
+                }
+              })();
+            }
+          },
+          true,
+        );
+      }
+
       if (!window._wpCartConfigSaveBound) {
         window._wpCartConfigSaveBound = true;
         document.addEventListener(
