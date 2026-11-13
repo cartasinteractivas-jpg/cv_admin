@@ -509,3 +509,38 @@
           true,
         );
       }
+
+
+// --- TRUCO PARA DESBLOQUEAR AUDIO EN MÓVILES ---
+if (!window._wpMobileAudioUnlocked) {
+  window._wpMobileAudioUnlocked = true;
+  
+  const unlockAudio = async () => {
+    try {
+      // 1. Desbloqueamos el AudioContext (para el pitido)
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx && !window._wpAudioCtx) {
+        window._wpAudioCtx = new Ctx();
+      }
+      if (window._wpAudioCtx && window._wpAudioCtx.state === "suspended") {
+        await window._wpAudioCtx.resume();
+      }
+
+      // 2. Desbloqueamos la etiqueta <audio> (para tu archivo mp3)
+      const silentAudio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA");
+      silentAudio.volume = 0.01;
+      await silentAudio.play().catch(() => {});
+      
+      // Si funcionó, quitamos los eventos para que no se repita
+      document.removeEventListener("touchstart", unlockAudio);
+      document.removeEventListener("click", unlockAudio);
+      console.log("Audio desbloqueado en móvil");
+    } catch (e) {
+      console.warn("No se pudo desbloquear audio", e);
+    }
+  };
+
+  // Escuchamos el primer toque o clic en la pantalla
+  document.addEventListener("touchstart", unlockAudio, { passive: true });
+  document.addEventListener("click", unlockAudio, { passive: true });
+}
