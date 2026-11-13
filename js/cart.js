@@ -4,8 +4,28 @@
       window._wpLastPedidoIds = window._wpLastPedidoIds || new Set();
       window._wpPedidoWatchTimer = window._wpPedidoWatchTimer || null;
 
+
       function playPedidoBeep() {
         try {
+          // 1. Verificamos si hay un audio personalizado guardado
+          let customAudio = null;
+          try {
+            let extra = {};
+            if (state && state.account && state.account.client && state.account.client.estilo_marco) {
+              extra = JSON.parse(state.account.client.estilo_marco);
+            }
+            customAudio = extra.sonido_alerta || null;
+          } catch (_) {}
+
+          // 2. Si existe, lo reproducimos
+          if (customAudio) {
+            const audio = new Audio(customAudio);
+            audio.volume = 1.0;
+            audio.play().catch(e => console.warn("Error reproduciendo audio custom", e));
+            return;
+          }
+
+          // 3. Si no existe, usamos el pitido por defecto (Web Audio API)
           const Ctx = window.AudioContext || window.webkitAudioContext;
           if (!Ctx) return;
           if (!window._wpAudioCtx) window._wpAudioCtx = new Ctx();
@@ -39,6 +59,8 @@
           console.warn("beep", e);
         }
       }
+
+
 
       function notifyPedido(count, sampleName) {
         try {
@@ -388,6 +410,35 @@
               } catch (_) {
                 extra = {};
               }
+
+        // --- PEGA EL BLOQUE AQUÍ ---
+            const soundFile = document.getElementById('custom-sound-file')?.files?.[0];
+            if (soundFile) {
+              const status = document.getElementById('custom-sound-status');
+              if (status) status.textContent = "Subiendo sonido...";
+              try {
+                const reader = new FileReader();
+                const dataUrl = await new Promise((resolve) => {
+                  reader.onload = (e) => resolve(e.target.result);
+                  reader.readAsDataURL(soundFile);
+                });
+                const res = await (typeof window.send === "function" ? window.send : send)({
+                  action: "upload_sound",
+                  fileName: soundFile.name,
+                  fileData: dataUrl
+                });
+                if (res.ok && res.url) {
+                  extra.sonido_alerta = res.url;
+                  if (status) status.textContent = "✓ Sonido subido correctamente.";
+                }
+              } catch (e) {
+                console.warn("Error subiendo sonido", e);
+                if (status) status.textContent = "Error al subir sonido.";
+              }
+            }
+            // --- FIN DEL BLOQUE ---
+
+                  
               const cartFormatoEl = form.querySelector('[name="cartFormato"]');
               const mostrarStockEl = form.querySelector('[name="mostrarStock"]');
               const permitirTomarEl = form.querySelector('[name="permitirTomar"]');
