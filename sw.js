@@ -4,7 +4,6 @@ self.addEventListener('activate', (e) => { e.waitUntil(self.clients.claim()); })
 self.addEventListener('push', (event) => {
   let data = { title: 'WebPocket', body: '¡Nuevo pedido recibido!' };
   
-  // Intentar leer los datos que envía Supabase
   try {
     if (event.data) {
       const parsed = event.data.json();
@@ -14,14 +13,12 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body || "Tienes un nuevo pedido pendiente.",
-    icon: 'https://cartasinteractivas-jpg.github.io/cv_start/logo.png', // Pon la ruta de tu logo si tienes
-    badge: 'https://cartasinteractivas-jpg.github.io/cv_start/logo.png',
-    vibrate: [500, 200, 500, 200, 500, 200, 500], // Vibración larga e insistente
-    tag: data.tag || 'wp-pedido-' + Date.now(), // Si pones un tag único, sonará cada vez. Si pones uno fijo, lo reemplaza.
-    renotify: true, // Obliga a que suene y vibre de nuevo aunque ya haya una notificación
-    requireInteraction: true, // La notificación se queda en pantalla hasta que la toquen (no desaparece sola)
-    silent: false, // Asegura que el sistema haga ruido
-    data: { url: data.url || './' }
+    vibrate: [500, 200, 500, 200, 500, 200, 500],
+    tag: data.tag || 'wp-pedido-' + Date.now(),
+    renotify: true,
+    requireInteraction: true,
+    silent: false,
+    data: { url: './' }
   };
 
   event.waitUntil(
