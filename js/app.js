@@ -2213,20 +2213,14 @@
             ["divertido", "Divertido / con humor"],
             ["neutro", "Neutro / equilibrado"],
           ];
-          const voces = [
-            ["nova", "🎙️ Nova (mujer · realista OpenRouter)"],
-            ["shimmer", "🎙️ Shimmer (mujer suave · realista)"],
-            ["alloy", "🎙️ Alloy (neutra · realista)"],
-            ["echo", "🎙️ Echo (hombre · realista OpenRouter)"],
-            ["onyx", "🎙️ Onyx (hombre grave · realista)"],
-            ["fable", "🎙️ Fable (narradora · realista)"],
-            ["mujer", "👩 Mujer (navegador)"],
-            ["mujer_alegre", "👩 Mujer alegre (navegador)"],
-            ["mujer_profesional", "👩 Mujer profesional (navegador)"],
-            ["hombre", "👨 Hombre (navegador)"],
-            ["hombre_alegre", "👨 Hombre alegre (navegador)"],
-            ["hombre_profesional", "👨 Hombre profesional (navegador)"],
-            ["silencio", "🔇 Sin voz (solo texto)"],
+                    const voces = [
+            ["nova", "🎙️ Femenina (Realista - Nova)"],
+            ["shimmer", "🎙️ Femenina suave (Realista - Shimmer)"],
+            ["alloy", "🎙️ Neutra (Realista - Alloy)"],
+            ["echo", "🎙️ Masculina (Realista - Echo)"],
+            ["onyx", "🎙️ Masculina grave (Realista - Onyx)"],
+            ["fable", "🎙️ Narradora (Realista - Fable)"],
+            ["silencio", "🔇 Sin voz (Solo texto)"]
           ];
           const iaSub = state.iaSub || "info";
           return `<form id="ia-form" class="form">
