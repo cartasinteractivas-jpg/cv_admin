@@ -1876,6 +1876,14 @@
                   <input type="checkbox" name="avisarPedidos" id="chk-avisar-pedidos" ${avisarPedidos?"checked":""} style="margin-top:4px">
                   <span>Avisar pedidos nuevos (pitido + notificación)<br><small style="font-weight:500;opacity:.9">Al activarlo se pedirá permiso de notificaciones. Con el panel abierto, al llegar un pedido sonará un pitido y verás un aviso. Con la pantalla apagada el aviso del sistema depende del permiso del navegador.</small></span>
                 </label>
+
+div class="field" style="margin-bottom:12px; padding:12px; border-radius:12px; border:1px solid #38bdf855; background:#0c4a6e33">
+                  <label style="color:#38bdf8; font-weight:800;">🔔 Sonido de alerta personalizado (Opcional)</label>
+                  <input type="file" accept="audio/*,.mp3,.wav" id="custom-sound-file" style="width:100%; margin-top:8px; padding:8px; border-radius:12px; background:#0b1220; border:1px solid #ffffff33; color:#fff">
+                  <small style="display:block; margin-top:6px; color:#94a3b8;">Sube un .mp3 o .wav corto. Reemplazará al pitido por defecto.</small>
+                  <div id="custom-sound-status" style="font-size:12px; margin-top:6px; color:#4ade80;"></div>
+                </div>
+                
                 <button type="button" class="submit" id="btn-save-cart-config" style="width:100%">Guardar configuración</button>
               </div>
             </div>`;
