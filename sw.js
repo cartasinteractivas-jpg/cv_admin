@@ -13,27 +13,34 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body || "Tienes un nuevo pedido pendiente.",
-    vibrate: [500, 200, 500, 200, 500, 200, 500],
-    tag: data.tag || 'wp-pedido-' + Date.now(),
-    renotify: true,
-    requireInteraction: true,
-    silent: false,
+    vibrate: [1000, 500, 1000, 500, 1000, 500, 1000], 
+    tag: 'wp-pedido-nuevo', 
+    renotify: true, 
+    requireInteraction: true, 
+    silent: false, 
     data: { url: './' }
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'WebPocket · Nuevo pedido', options)
+    self.registration.showNotification(data.title, options)
   );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  
+  // 1. Guardamos la bandera para que suene el MP3 al abrir
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      for (const c of clients) {
-        if ('focus' in c) return c.focus();
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Si ya está abierto, enviamos un mensaje directo
+      for (const client of clientList) {
+        client.postMessage({ action: 'play_audio_pedido' });
       }
-      if (self.clients.openWindow) return self.clients.openWindow('./');
+      
+      // Si está cerrado, abrimos la app con una variable en la URL (?pedido=1)
+      if (clients.openWindow) {
+        return clients.openWindow('./?pedido_nuevo=1');
+      }
     })
   );
 });
