@@ -6920,4 +6920,26 @@ app
         }
       }
       init();
-    
+
+
+// --- DETECTOR DE PEDIDO NUEVO AL ABRIR LA APP ---
+// Si el Service Worker avisa que se tocó la notificación
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data && event.data.action === 'play_audio_pedido') {
+      // Esperamos un momento a que cargue el panel y disparamos el audio
+      setTimeout(() => {
+        if (typeof playPedidoBeep === "function") playPedidoBeep();
+      }, 1500);
+    }
+  });
+}
+
+// Si la app se abrió desde la notificación con ?pedido_nuevo=1
+if (window.location.search.includes("pedido_nuevo=1")) {
+  setTimeout(() => {
+    if (typeof playPedidoBeep === "function") playPedidoBeep();
+    // Limpiamos la URL para que no suene cada vez que refresquen
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }, 2000);
+}
