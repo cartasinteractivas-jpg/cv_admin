@@ -1507,10 +1507,10 @@
             <form id="password-form" class="form">
               <h4>Cambiar contraseña</h4>
               <div class="field"><label>Nueva contraseña</label>
-                <input name="newPassword" type="password" placeholder="Mínimo 4 caracteres" autocomplete="new-password" required>
+                <input name="newPassword" type="text" placeholder="Mínimo 4 caracteres" autocomplete="new-password" required>
               </div>
               <div class="field"><label>Confirmar contraseña</label>
-                <input name="confirmPassword" type="password" placeholder="Repite la contraseña" autocomplete="new-password" required>
+                <input name="confirmPassword" type="text" placeholder="Repite la contraseña" autocomplete="off" required>
               </div>
               <button type="submit" class="action" style="width:100%;background:#2563eb;color:#fff">Actualizar contraseña</button>
             </form>
@@ -3679,12 +3679,14 @@ const readDataUrl = (file) =>
               if (el) el.textContent = String(n);
             } catch (_) {}
           })();
-// 👇 PEGA EL CÓDIGO AQUÍ (antes de cerrar la función) 👇
+
+              
+        // --- Lógica para cambiar contraseña ---
         app.querySelector("#password-form")?.addEventListener("submit", async (e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
-          const p1 = String(fd.get("newPassword") || "");
-          const p2 = String(fd.get("confirmPassword") || "");
+          const p1 = String(fd.get("newPassword") || "").trim();
+          const p2 = String(fd.get("confirmPassword") || "").trim();
           
           if (p1 !== p2) {
             return void appAlert("Las contraseñas no coinciden.");
@@ -3695,13 +3697,29 @@ const readDataUrl = (file) =>
           
           try {
             showLoader("Actualizando contraseña…");
-            await send({
+            const res = await send({
               action: "client_change_password",
               newPassword: p1
             });
-            hideLoader();
-            await appAlert("Contraseña actualizada correctamente.");
-            e.currentTarget.reset();
+            
+            if (res && res.ok) {
+              hideLoader();
+              await appAlert("Contraseña actualizada correctamente. Serás redirigido al inicio de sesión para que uses tu nueva clave.");
+              
+              // 1. Limpiar la sesión guardada
+              try {
+                sessionStorage.removeItem("wp_auth");
+                state.auth = null;
+                state.account = null;
+                state.panel = null;
+                state.adminSelected = null;
+              } catch (_) {}
+              
+              // 2. Recargar la página para forzar el login
+              window.location.reload();
+            } else {
+              throw new Error(res.error || "No se pudo actualizar la contraseña.");
+            }
           } catch (err) {
             hideLoader();
             void appAlert(err.message || "No se pudo actualizar la contraseña.");
