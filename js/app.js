@@ -866,6 +866,10 @@
           <input type="checkbox" name="sin_titulo" value="1" ${sinTituloChecked(c) ? "checked" : ""} style="width:18px;height:18px">
           Sin título y subtítulo (solo menú y botones en el perfil público)
         </label>`;
+
+
+
+
       function accountTab(tab) {
         const a = state.account || {},
           c = a.client || {},
@@ -1478,6 +1482,9 @@
               </div>
               <button class="submit">Guardar configuración</button>
             </form>
+
+
+
             
             <hr style="border-color:#fff2;margin:18px 0">
             <form id="tipo-form" class="form">
@@ -1491,6 +1498,24 @@
               </div>
               <button type="submit" class="action" style="width:100%">Cambiar tipo de perfil</button>
             </form>
+
+
+
+</form>
+
+            <hr style="border-color:#fff2;margin:18px 0">
+            <form id="password-form" class="form">
+              <h4>Cambiar contraseña</h4>
+              <div class="field"><label>Nueva contraseña</label>
+                <input name="newPassword" type="password" placeholder="Mínimo 4 caracteres" autocomplete="new-password" required>
+              </div>
+              <div class="field"><label>Confirmar contraseña</label>
+                <input name="confirmPassword" type="password" placeholder="Repite la contraseña" autocomplete="new-password" required>
+              </div>
+              <button type="submit" class="action" style="width:100%;background:#2563eb;color:#fff">Actualizar contraseña</button>
+            </form>
+
+
             
             <hr style="border-color:#fff2;margin:18px 0">
             <form id="delete-self-form" class="form">
@@ -3654,6 +3679,36 @@ const readDataUrl = (file) =>
               if (el) el.textContent = String(n);
             } catch (_) {}
           })();
+// 👇 PEGA EL CÓDIGO AQUÍ (antes de cerrar la función) 👇
+        app.querySelector("#password-form")?.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          const p1 = String(fd.get("newPassword") || "");
+          const p2 = String(fd.get("confirmPassword") || "");
+          
+          if (p1 !== p2) {
+            return void appAlert("Las contraseñas no coinciden.");
+          }
+          if (p1.length < 4) {
+            return void appAlert("La contraseña debe tener al menos 4 caracteres.");
+          }
+          
+          try {
+            showLoader("Actualizando contraseña…");
+            await send({
+              action: "client_change_password",
+              newPassword: p1
+            });
+            hideLoader();
+            await appAlert("Contraseña actualizada correctamente.");
+            e.currentTarget.reset();
+          } catch (err) {
+            hideLoader();
+            void appAlert(err.message || "No se pudo actualizar la contraseña.");
+          }
+        });
+
+              
         }
 
 
