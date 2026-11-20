@@ -3668,33 +3668,49 @@ const readDataUrl = (file) =>
             } catch (_) {}
           })();
 
+
               
-        // --- Lógica para cambiar contraseña ---
-        app.querySelector("#password-form")?.addEventListener("submit", async (e) => {
+              
+        // --- Lógica para cambiar usuario y/o contraseña ---
+        app.querySelector("#credentials-form")?.addEventListener("submit", async (e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
+          const newUser = String(fd.get("newUser") || "").trim();
           const p1 = String(fd.get("newPassword") || "").trim();
           const p2 = String(fd.get("confirmPassword") || "").trim();
           
-          if (p1 !== p2) {
-            return void appAlert("Las contraseñas no coinciden.");
+          if (!newUser) {
+            return void appAlert("El usuario no puede quedar vacío.");
           }
-          if (p1.length < 4) {
-            return void appAlert("La contraseña debe tener al menos 4 caracteres.");
+          
+          // Si escribe contraseña, debe confirmarla
+          if (p1 || p2) {
+            if (p1 !== p2) {
+              return void appAlert("Las contraseñas no coinciden.");
+            }
+            if (p1.length < 4) {
+              return void appAlert("La contraseña debe tener al menos 4 caracteres.");
+            }
           }
           
           try {
-            showLoader("Actualizando contraseña…");
+            showLoader("Guardando cambios…");
             const res = await send({
-              action: "client_change_password",
-              newPassword: p1
+              action: "client_change_credentials",
+              newUser: newUser,
+              newPassword: p1 || null, // null si no cambia
             });
             
             if (res && res.ok) {
-              hideLoader();
-              await appAlert("Contraseña actualizada correctamente. Serás redirigido al inicio de sesión para que uses tu nueva clave.");
+              // Actualizar el estado local
+              if (state.account && state.account.client) {
+                state.account.client.usuario = newUser;
+              }
               
-              // 1. Limpiar la sesión guardada
+              hideLoader();
+              await appAlert("Datos actualizados. Vuelve a iniciar sesión con tus nuevos datos.");
+              
+              // Limpiar sesión y recargar
               try {
                 sessionStorage.removeItem("wp_auth");
                 state.auth = null;
@@ -3702,18 +3718,22 @@ const readDataUrl = (file) =>
                 state.panel = null;
                 state.adminSelected = null;
               } catch (_) {}
-              
-              // 2. Recargar la página para forzar el login
               window.location.reload();
             } else {
-              throw new Error(res.error || "No se pudo actualizar la contraseña.");
+              throw new Error(res.error || "No se pudo actualizar");
             }
           } catch (err) {
             hideLoader();
-            void appAlert(err.message || "No se pudo actualizar la contraseña.");
+            void appAlert(err.message || "No se pudo actualizar.");
           }
         });
 
+
+
+
+              
+
+              
               
         }
 
