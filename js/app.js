@@ -1441,6 +1441,8 @@
           </div>`;
         }
 
+
+            
         if (tab === "config") {
           const d = daysLeft(c);
           let sinTitulo = false;
@@ -1451,36 +1453,22 @@
           sinTitulo = sinTitulo || c.ocultar_datos === true || c.sin_titulo === true;
           return `<div class="form">
             <p class="message" style="background:#422006;border-color:#fbbf24;color:#fef3c7">⏱ Días restantes: <b>${d == null ? "—" : d}</b>${c.fecha_fin ? " (hasta " + new Date(c.fecha_fin).toLocaleDateString() + ")" : ""}</p>
-            
-            <form id="config-form" class="form">
-              <h4 style="margin:8px 0">Pausar WebPocket</h4>
-              <p style="font-size:12px;opacity:.85">Al pausar, el perfil público solo muestra lo que elijas (no el menú completo).</p>
-              <div class="field"><label>Estado del perfil</label>
-                <select name="pausa_activa">
-                  <option value="0" ${!c.pausa_activa ? "selected" : ""}>Activo (normal)</option>
-                  <option value="1" ${c.pausa_activa ? "selected" : ""}>Pausado</option>
-                </select>
+
+
+
+            <hr style="border-color:#fff2;margin:18px 0">
+            <form id="credentials-form" class="form">
+              <h4>Cambiar usuario y contraseña</h4>
+              <div class="field"><label>Usuario</label>
+                <input name="newUser" type="text" value="${esc(c.usuario || "")}" placeholder="Tu usuario" autocomplete="off" required>
               </div>
-              <div class="field"><label>Modo pausa</label>
-                <select name="pausa_modo">
-                  <option value="foto_video" ${(c.pausa_modo||"foto_video")==="foto_video"?"selected":""}>Solo foto y/o video</option>
-                  <option value="foto" ${c.pausa_modo==="foto"?"selected":""}>Solo foto</option>
-                  <option value="video" ${c.pausa_modo==="video"?"selected":""}>Solo video</option>
-                  <option value="texto" ${c.pausa_modo==="texto"?"selected":""}>Solo mensaje de texto</option>
-                  <option value="redirigir" ${c.pausa_modo==="redirigir"?"selected":""}>QR dinámico (redirigir a otra URL)</option>
-                </select>
+              <div class="field"><label>Contraseña</label>
+                <input name="newPassword" type="text" placeholder="Déjala vacía si no quieres cambiarla" autocomplete="off">
               </div>
-              <div class="field"><label>Texto en pausa (opcional)</label><textarea name="pausa_texto" rows="3" placeholder="Ej: Volvemos pronto">${esc(c.pausa_texto||"")}</textarea></div>
-              <div class="field"><label>URL de redirección (si QR dinámico)</label><input name="pausa_url" value="${esc(c.pausa_url||"")}" placeholder="https://…"></div>
-              
-              <h4 style="margin:14px 0 6px">Vista del perfil público</h4>
-              <div class="field"><label>Mostrar nombre y descripción</label>
-                <select name="ocultar_datos">
-                  <option value="0" ${!sinTitulo?"selected":""}>Sí, mostrar título y subtítulo</option>
-                  <option value="1" ${sinTitulo?"selected":""}>Sin título (solo menú y botones)</option>
-                </select>
+              <div class="field"><label>Confirmar contraseña</label>
+                <input name="confirmPassword" type="text" placeholder="Repite la nueva contraseña" autocomplete="off">
               </div>
-              <button class="submit">Guardar configuración</button>
+              <button type="submit" class="action" style="width:100%;background:#2563eb;color:#fff">Guardar cambios</button>
             </form>
 
 
