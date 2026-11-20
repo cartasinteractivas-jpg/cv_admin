@@ -1491,17 +1491,7 @@
 
 </form>
 
-            <hr style="border-color:#fff2;margin:18px 0">
-            <form id="password-form" class="form">
-              <h4>Cambiar contraseña</h4>
-              <div class="field"><label>Nueva contraseña</label>
-                <input name="newPassword" type="text" placeholder="Mínimo 4 caracteres" autocomplete="new-password" required>
-              </div>
-              <div class="field"><label>Confirmar contraseña</label>
-                <input name="confirmPassword" type="text" placeholder="Repite la contraseña" autocomplete="off" required>
-              </div>
-              <button type="submit" class="action" style="width:100%;background:#2563eb;color:#fff">Actualizar contraseña</button>
-            </form>
+           
 
 
             
@@ -3653,8 +3643,64 @@ const readDataUrl = (file) =>
             render();
           }),
         );
-        
+
+
+
+            
         function bindAccountForms() {
+        // --- Cambiar usuario y/o contraseña (Configuración; siempre activo) ---
+        app.querySelector("#credentials-form")?.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          const newUser = String(fd.get("newUser") || "").trim();
+          const p1 = String(fd.get("newPassword") || "").trim();
+          const p2 = String(fd.get("confirmPassword") || "").trim();
+
+          if (!newUser) {
+            return void appAlert("El usuario no puede quedar vacío.");
+          }
+
+          if (p1 || p2) {
+            if (p1 !== p2) {
+              return void appAlert("Las contraseñas no coinciden.");
+            }
+            if (p1.length < 4) {
+              return void appAlert("La contraseña debe tener al menos 4 caracteres.");
+            }
+          }
+
+          try {
+            showLoader("Guardando cambios…");
+            const res = await send({
+              action: "client_change_credentials",
+              newUser: newUser,
+              newPassword: p1 || null,
+            });
+
+            if (res && res.ok) {
+              if (state.account && state.account.client) {
+                state.account.client.usuario = newUser;
+              }
+              hideLoader();
+              await appAlert("Datos actualizados. Vuelve a iniciar sesión con tus nuevos datos.");
+              try {
+                sessionStorage.removeItem("wp_auth");
+                state.auth = null;
+                state.account = null;
+                state.panel = null;
+                state.adminSelected = null;
+              } catch (_) {}
+              window.location.reload();
+            } else {
+              throw new Error((res && res.error) || "No se pudo actualizar");
+            }
+          } catch (err) {
+            hideLoader();
+            void appAlert(err.message || "No se pudo actualizar.");
+          }
+        });
+
+        // --- Contador de visitas (solo pestaña QR) ---
         if (state.accountTab === "qr") {
           void (async () => {
             try {
@@ -3667,76 +3713,7 @@ const readDataUrl = (file) =>
               if (el) el.textContent = String(n);
             } catch (_) {}
           })();
-
-
-              
-              
-        // --- Lógica para cambiar usuario y/o contraseña ---
-        app.querySelector("#credentials-form")?.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const fd = new FormData(e.currentTarget);
-          const newUser = String(fd.get("newUser") || "").trim();
-          const p1 = String(fd.get("newPassword") || "").trim();
-          const p2 = String(fd.get("confirmPassword") || "").trim();
-          
-          if (!newUser) {
-            return void appAlert("El usuario no puede quedar vacío.");
-          }
-          
-          // Si escribe contraseña, debe confirmarla
-          if (p1 || p2) {
-            if (p1 !== p2) {
-              return void appAlert("Las contraseñas no coinciden.");
-            }
-            if (p1.length < 4) {
-              return void appAlert("La contraseña debe tener al menos 4 caracteres.");
-            }
-          }
-          
-          try {
-            showLoader("Guardando cambios…");
-            const res = await send({
-              action: "client_change_credentials",
-              newUser: newUser,
-              newPassword: p1 || null, // null si no cambia
-            });
-            
-            if (res && res.ok) {
-              // Actualizar el estado local
-              if (state.account && state.account.client) {
-                state.account.client.usuario = newUser;
-              }
-              
-              hideLoader();
-              await appAlert("Datos actualizados. Vuelve a iniciar sesión con tus nuevos datos.");
-              
-              // Limpiar sesión y recargar
-              try {
-                sessionStorage.removeItem("wp_auth");
-                state.auth = null;
-                state.account = null;
-                state.panel = null;
-                state.adminSelected = null;
-              } catch (_) {}
-              window.location.reload();
-            } else {
-              throw new Error(res.error || "No se pudo actualizar");
-            }
-          } catch (err) {
-            hideLoader();
-            void appAlert(err.message || "No se pudo actualizar.");
-          }
-        });
-
-
-
-
-              
-
-              
-              
         }
-
 
         app.querySelectorAll("[data-tabs-dir]").forEach((btn) => {
           btn.onclick = (e) => {
