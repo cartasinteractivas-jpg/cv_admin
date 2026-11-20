@@ -315,6 +315,63 @@
             };
           });
       };
+
+      const parseEstudios = (raw) => {
+        if (!raw) return [];
+        if (Array.isArray(raw)) {
+          return raw
+            .map((e) => {
+              if (typeof e === "string") return parseEstudios(e)[0] || { tipo: "Carrera", titulo: e, institucion: "", inicio: "", fin: "", detalle: "" };
+              return {
+                tipo: e.tipo || e.tipo_estudio || "Carrera",
+                titulo: e.titulo || e.carrera || e.nombre || "",
+                institucion: e.institucion || e.lugar || e.centro || "",
+                inicio: e.inicio || e.fecha_inicio || e.desde || "",
+                fin: e.fin || e.fecha_fin || e.hasta || "",
+                detalle: e.detalle || e.descripcion || "",
+              };
+            })
+            .filter((e) => e.titulo || e.institucion);
+        }
+        return String(raw)
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .map((line) => {
+            if (line.includes("||")) {
+              const p = line.split("||").map((x) => x.trim());
+              // tipo||titulo||institucion||inicio||fin||detalle
+              if (p.length >= 3) {
+                return {
+                  tipo: p[0] || "Carrera",
+                  titulo: p[1] || "",
+                  institucion: p[2] || "",
+                  inicio: p[3] || "",
+                  fin: p[4] || "",
+                  detalle: p.slice(5).join("||") || "",
+                };
+              }
+              return {
+                tipo: "Carrera",
+                titulo: p[0] || "",
+                institucion: p[1] || "",
+                inicio: "",
+                fin: "",
+                detalle: p.slice(2).join("||") || "",
+              };
+            }
+            return {
+              tipo: "Carrera",
+              titulo: line,
+              institucion: "",
+              inicio: "",
+              fin: "",
+              detalle: "",
+            };
+          })
+          .filter((e) => e.titulo || e.institucion);
+      };
+
       const expFor = (p) => {
         const parsed = parseExperiencia(p.experiencia);
         if (parsed.length) return parsed;
@@ -816,6 +873,48 @@
         return `<div class="field"><label>${label}</label><div data-list-box="${key}" class="form">${inputs}</div><input type="hidden" name="${key}" value="${esc(rows.join("\n"))}"><button type="button" class="action" data-add-entry="${key}" data-entry-label="${esc(label)}">+ Agregar ${label.toLowerCase()}</button></div>`;
       };
       
+
+      const STUDY_TYPES = ["Carrera", "Curso", "Diploma", "Certificación", "Técnico", "Maestría", "Doctorado", "Otro"];
+      const studyEditor = (value) => {
+        const rows = parseEstudios(value);
+        const list = (rows.length ? rows : [{ tipo: "Carrera", titulo: "", institucion: "", inicio: "", fin: "", detalle: "" }])
+          .map((e) => {
+            const opts = STUDY_TYPES.map(
+              (tp) =>
+                `<option value="${tp}"${String(e.tipo || "Carrera") === tp ? " selected" : ""}>${tp}</option>`,
+            ).join("");
+            return `<div class="card" data-study-edit-row style="margin-bottom:10px;padding:12px">
+                <div class="field"><label>Tipo</label>
+                  <select data-study-tipo>${opts}</select>
+                </div>
+                <div class="field"><label>Carrera / curso / programa</label>
+                  <input data-study-titulo placeholder="Ej: Computación e Informática" value="${esc(e.titulo || "")}">
+                </div>
+                <div class="field"><label>Institución / centro</label>
+                  <input data-study-institucion placeholder="Ej: Instituto CESCA · Lima" value="${esc(e.institucion || "")}">
+                </div>
+                <div class="grid2">
+                  <div class="field"><label>Inicio</label>
+                    <input data-study-inicio type="month" value="${esc(String(e.inicio || "").slice(0, 7))}" placeholder="2020-03">
+                  </div>
+                  <div class="field"><label>Fin / conclusión</label>
+                    <input data-study-fin type="month" value="${esc(String(e.fin || "").slice(0, 7))}" placeholder="2023-12">
+                  </div>
+                </div>
+                <div class="field"><label>Detalle (opcional)</label>
+                  <textarea data-study-detalle rows="2" placeholder="Mención, especialidad, logros…">${esc(e.detalle || "")}</textarea>
+                </div>
+                <button type="button" class="action" data-remove-study-row>Quitar</button>
+              </div>`;
+          })
+          .join("");
+        return `<div class="field"><label>Estudios</label>
+          <div id="study-edit-list" class="form">${list}</div>
+          <input type="hidden" name="estudios" value="">
+          <button type="button" class="action" id="study-add-row">+ Agregar estudio</button>
+        </div>`;
+      };
+
       const expEditor = (value) => {
         const rows = parseExperiencia(value);
         const list = (rows.length ? rows : [{ titulo: "", detalle: "" }])
@@ -850,7 +949,7 @@
           <input type="checkbox" name="sin_titulo" value="1" ${sinTituloChecked(c) ? "checked" : ""} style="width:18px;height:18px">
           Sin título y subtítulo (solo menú y botones en el perfil público)
         </label>
-        ${listEditor("estudios", "Estudio", c.estudios)}${expEditor(c.experiencia)}`;
+        ${studyEditor(c.estudios)}${expEditor(c.experiencia)}`;
       const businessForm = (c) =>
         `<div class="field"><label>Nombre del negocio</label><input name="negocio" value="${esc(c.negocio)}"></div>
         <div class="grid2"><div class="field"><label>Giro</label><input name="giro" value="${esc(c.giro)}"></div><div class="field"><label>Teléfono</label><input name="telefono" value="${esc(c.telefono)}"></div></div>
@@ -4483,6 +4582,34 @@ const readDataUrl = (file) =>
           btn.onclick = () => btn.closest("[data-exp-edit-row]")?.remove();
         });
 
+        app.querySelector("#study-add-row")?.addEventListener("click", () => {
+          const list = app.querySelector("#study-edit-list");
+          if (!list) return;
+          const card = document.createElement("div");
+          card.className = "card";
+          card.setAttribute("data-study-edit-row", "");
+          card.style.marginBottom = "10px";
+          card.style.padding = "12px";
+          const opts = ["Carrera", "Curso", "Diploma", "Certificación", "Técnico", "Maestría", "Doctorado", "Otro"]
+            .map((tp) => `<option value="${tp}">${tp}</option>`)
+            .join("");
+          card.innerHTML = `<div class="field"><label>Tipo</label><select data-study-tipo>${opts}</select></div>
+            <div class="field"><label>Carrera / curso / programa</label><input data-study-titulo placeholder="Ej: Computación e Informática"></div>
+            <div class="field"><label>Institución / centro</label><input data-study-institucion placeholder="Ej: Instituto CESCA · Lima"></div>
+            <div class="grid2">
+              <div class="field"><label>Inicio</label><input data-study-inicio type="month"></div>
+              <div class="field"><label>Fin / conclusión</label><input data-study-fin type="month"></div>
+            </div>
+            <div class="field"><label>Detalle (opcional)</label><textarea data-study-detalle rows="2" placeholder="Mención, especialidad, logros…"></textarea></div>
+            <button type="button" class="action" data-remove-study-row>Quitar</button>`;
+          list.appendChild(card);
+          card.querySelector("[data-remove-study-row]").onclick = () => card.remove();
+        });
+        app.querySelectorAll("[data-remove-study-row]").forEach((btn) => {
+          btn.onclick = () => btn.closest("[data-study-edit-row]")?.remove();
+        });
+
+
         // Estudios / experiencia: agregar y quitar
         app.querySelectorAll("[data-add-entry]").forEach((button) => {
           button.onclick = () => {
@@ -4934,16 +5061,22 @@ app
           ?.addEventListener("submit", async (e) => {
             e.preventDefault();
             const form = e.currentTarget;
-            ["estudios"].forEach((key) => {
-              const hidden = form.querySelector(`[name="${key}"]`);
-              if (hidden)
-                hidden.value = [
-                  ...form.querySelectorAll(`[data-list-input="${key}"]`),
-                ]
-                  .map((input) => input.value.trim())
-                  .filter(Boolean)
-                  .join("\n");
-            });
+                        const studyHidden = form.querySelector('[name="estudios"]');
+            if (studyHidden) {
+              studyHidden.value = [...form.querySelectorAll("[data-study-edit-row]")]
+                .map((row) => {
+                  const tipo = (row.querySelector("[data-study-tipo]")?.value || "Carrera").trim();
+                  const titulo = (row.querySelector("[data-study-titulo]")?.value || "").trim();
+                  const inst = (row.querySelector("[data-study-institucion]")?.value || "").trim();
+                  const ini = (row.querySelector("[data-study-inicio]")?.value || "").trim();
+                  const fin = (row.querySelector("[data-study-fin]")?.value || "").trim();
+                  const det = (row.querySelector("[data-study-detalle]")?.value || "").trim();
+                  if (!titulo && !inst) return "";
+                  return [tipo, titulo, inst, ini, fin, det].join("||");
+                })
+                .filter(Boolean)
+                .join("\n");
+            }
             const expHidden = form.querySelector('[name="experiencia"]');
             if (expHidden) {
               expHidden.value = [...form.querySelectorAll("[data-exp-edit-row]")]
